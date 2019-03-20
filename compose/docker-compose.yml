@@ -1,0 +1,67 @@
+version: "2"
+
+services:
+  redis:
+    image: redis:5.0.3
+    volumes:
+      - ../redis/redis.conf:/etc/redis/redis.conf:ro
+      - ../redis/data:/data
+    command:
+      - redis-server
+      - /etc/redis/redis.conf
+    ports:
+      - 6379:6379
+    environment:
+      - TZ=Asia/Shanghai
+
+
+
+  mysql:
+    image: mysql:5.7
+    volumes:
+      - ../mysql/my.cnf:/etc/mysql/my.cnf:ro
+      - ../mysql/data:/var/lib/mysql
+      - ../mysql/init:/docker-entrypoint-initdb.d/
+    command: [
+      '--character-set-server=utf8',
+      '--default-time-zone=+8:00'   # 设置mysql时区，不是容器时区
+    ]
+    environment:
+      MYSQL_DATABASE: ry
+      MYSQL_ROOT_PASSWORD: qwert2019
+      MYSQL_ROOT_HOST: '%'
+    ports:
+       - 3306:3306
+    restart: always
+
+
+
+  # 测试版
+  tomcat-test:
+    image: tomcat:8.5
+    volumes:
+      - ../apptest:/usr/local/tomcat/webapps/ROOT
+    ports:
+      - 8088:8080
+      - 35717:35717
+    restart: always
+    privileged: true
+    ## 容器时间和宿主时间保持一致
+    environment:
+      - TZ=Asia/Shanghai
+    links:
+      - mysql
+  # 测试最新版
+  tomcat-test-last:
+    image: tomcat:8.5
+    volumes:
+      - ../apptestlast:/usr/local/tomcat/webapps/ROOT
+    ports:
+      - 8089:8080
+      - 35718:35717
+    restart: always
+    privileged: true
+    environment:
+      - TZ=Asia/Shanghai
+    links:
+      - mysql
